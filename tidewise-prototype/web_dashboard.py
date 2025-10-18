@@ -162,5 +162,10 @@ if __name__ == '__main__':
     print("=" * 60)
     print("\n⚡ Press Ctrl+C to stop\n")
     
+    # Get port from environment variable (for cloud hosting) or default to 5000
+    import os
+    port = int(os.environ.get('PORT', 5000))
+    
     # Run Flask app
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # Set debug=False for production deployment
+    app.run(debug=False, host='0.0.0.0', port=port)
