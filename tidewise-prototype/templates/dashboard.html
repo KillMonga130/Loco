@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TideWise - Real-Time Coastal Risk Monitoring</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header .location {
+            font-size: 1.2em;
+            color: #94a3b8;
+        }
+
+        .alert-banner {
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        .alert-icon {
+            font-size: 4em;
+            margin-bottom: 10px;
+        }
+
+        .alert-level {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .alert-message {
+            font-size: 1.3em;
+            margin-bottom: 15px;
+        }
+
+        .risk-score {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        .alert-reasons {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .alert-reasons ul {
+            list-style: none;
+            text-align: left;
+            display: inline-block;
+        }
+
+        .alert-reasons li {
+            padding: 5px 0;
+            font-size: 1.1em;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .metric-icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .metric-label {
+            font-size: 0.9em;
+            color: #94a3b8;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .metric-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .metric-trend {
+            font-size: 1.1em;
+            padding: 5px 10px;
+            border-radius: 5px;
+            display: inline-block;
+            margin-top: 5px;
+        }
+
+        .trend-up {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+        }
+
+        .trend-down {
+            background: rgba(34, 197, 94, 0.2);
+            color: #86efac;
+        }
+
+        .trend-neutral {
+            background: rgba(148, 163, 184, 0.2);
+            color: #cbd5e1;
+        }
+
+        .charts-section {
+            margin-top: 30px;
+        }
+
+        .chart-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .chart-title {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            color: #e2e8f0;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2em;
+        }
+
+        .last-update {
+            text-align: center;
+            color: #94a3b8;
+            margin-top: 20px;
+            font-size: 0.9em;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #94a3b8;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .updating {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌊 TideWise</h1>
+            <div class="location">
+                <strong>{{ location_name }}</strong> | {{ latitude }}°, {{ longitude }}°
+            </div>
+        </div>
+
+        <div id="alert-banner" class="alert-banner">
+            <div class="loading">Loading coastal data...</div>
+        </div>
+
+        <div class="metrics-grid" id="metrics-grid">
+            <div class="loading">Fetching real-time conditions...</div>
+        </div>
+
+        <div class="charts-section">
+            <div class="chart-card">
+                <div class="chart-title">📊 24-Hour Atmospheric Pressure Trend</div>
+                <div id="pressure-chart"></div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-title">🌊 Wave Height & Tide Level</div>
+                <div id="wave-chart"></div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-title">⚠️ Risk Score History</div>
+                <div id="risk-chart"></div>
+            </div>
+        </div>
+
+        <div class="last-update" id="last-update"></div>
+
+        <div class="footer">
+            <p><strong>TideWise</strong> - Community-Owned Coastal Intelligence</p>
+            <p style="margin-top: 10px; font-size: 0.9em;">
+                Powered by NOAA GFS + Local Sensors | Built for LoCO AUV | Ocean Hub Africa
+            </p>
+        </div>
+    </div>
+
+    <script>
+        let updateInterval;
+
+        async function fetchCurrentData() {
+            try {
+                const response = await fetch('/api/current');
+                const data = await response.json();
+                
+                if (data.error) {
+                    console.error('API Error:', data.error);
+                    return;
+                }
+
+                updateAlertBanner(data.alert, data.conditions);
+                updateMetrics(data.conditions, data.trends);
+                updateLastUpdate(data.timestamp);
+                
+                // Fetch and update charts
+                await updateCharts();
+            } catch (error) {
+                console.error('Failed to fetch data:', error);
+            }
+        }
+
+        function updateAlertBanner(alert, conditions) {
+            const banner = document.getElementById('alert-banner');
+            const icons = {
+                'green': '✅',
+                'yellow': '⚡',
+                'orange': '⚠️',
+                'red': '🚨'
+            };
+
+            let reasonsHTML = '';
+            if (alert.reasons && alert.reasons.length > 0) {
+                reasonsHTML = `
+                    <div class="alert-reasons">
+                        <strong>Risk Factors:</strong>
+                        <ul>
+                            ${alert.reasons.map(r => `<li>• ${r}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            banner.style.background = alert.color;
+            banner.innerHTML = `
+                <div class="alert-icon">${icons[alert.level]}</div>
+                <div class="alert-level">${alert.level} Alert</div>
+                <div class="alert-message">${alert.message}</div>
+                <div class="risk-score">Risk Score: ${alert.risk_score}/10</div>
+                ${reasonsHTML}
+            `;
+        }
+
+        function updateMetrics(conditions, trends) {
+            const metricsGrid = document.getElementById('metrics-grid');
+            
+            const metrics = [
+                {
+                    icon: '🌡️',
+                    label: 'Pressure',
+                    value: conditions.pressure,
+                    unit: 'hPa',
+                    trend: trends.pressure_change,
+                    trendLabel: `${trends.pressure_change > 0 ? '↓' : '↑'} ${Math.abs(trends.pressure_change)} hPa/3h`
+                },
+                {
+                    icon: '🌊',
+                    label: 'Wave Height',
+                    value: conditions.wave_height,
+                    unit: 'm',
+                    trend: trends.wave_change,
+                    trendLabel: `${trends.wave_change > 0 ? '↑' : '↓'} ${Math.abs(trends.wave_change).toFixed(1)} m/3h`
+                },
+                {
+                    icon: '🌀',
+                    label: 'Tide Level',
+                    value: conditions.tide_level,
+                    unit: 'm',
+                    trend: trends.tide_change,
+                    trendLabel: `${trends.tide_change > 0 ? '↑' : '↓'} ${Math.abs(trends.tide_change).toFixed(1)} m/3h`
+                },
+                {
+                    icon: '🌡️',
+                    label: 'Temperature',
+                    value: conditions.temperature,
+                    unit: '°C',
+                    trend: trends.temp_change,
+                    trendLabel: `${trends.temp_change < 0 ? '↓' : '↑'} ${Math.abs(trends.temp_change).toFixed(1)} °C/3h`
+                },
+                {
+                    icon: '💨',
+                    label: 'Wind Speed',
+                    value: conditions.wind_speed,
+                    unit: 'm/s',
+                    trend: 0,
+                    trendLabel: `${conditions.wind_direction}°`
+                }
+            ];
+
+            metricsGrid.innerHTML = metrics.map(m => {
+                let trendClass = 'trend-neutral';
+                if (m.label === 'Pressure' && m.trend > 0) trendClass = 'trend-up';
+                else if (m.label === 'Pressure' && m.trend < 0) trendClass = 'trend-down';
+                else if (['Wave Height', 'Tide Level'].includes(m.label) && m.trend > 0.5) trendClass = 'trend-up';
+                else if (m.label === 'Temperature' && m.trend < -1) trendClass = 'trend-up';
+
+                return `
+                    <div class="metric-card">
+                        <div class="metric-icon">${m.icon}</div>
+                        <div class="metric-label">${m.label}</div>
+                        <div class="metric-value">${m.value} <span style="font-size: 0.5em;">${m.unit}</span></div>
+                        <div class="metric-trend ${trendClass}">${m.trendLabel}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function updateCharts() {
+            try {
+                const response = await fetch('/api/historical');
+                const data = await response.json();
+
+                if (data.timestamps && data.timestamps.length > 0) {
+                    createPressureChart(data);
+                    createWaveChart(data);
+                    createRiskChart(data);
+                }
+            } catch (error) {
+                console.error('Failed to fetch historical data:', error);
+            }
+        }
+
+        function createPressureChart(data) {
+            const trace = {
+                x: data.timestamps.map(t => new Date(t)),
+                y: data.pressure,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Pressure',
+                line: { color: '#3b82f6', width: 3 }
+            };
+
+            const layout = {
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(255,255,255,0.05)',
+                font: { color: '#e2e8f0' },
+                xaxis: { title: 'Time', gridcolor: 'rgba(255,255,255,0.1)' },
+                yaxis: { title: 'Pressure (hPa)', gridcolor: 'rgba(255,255,255,0.1)' },
+                margin: { t: 20, r: 20, b: 50, l: 60 }
+            };
+
+            Plotly.newPlot('pressure-chart', [trace], layout, {responsive: true});
+        }
+
+        function createWaveChart(data) {
+            const trace1 = {
+                x: data.timestamps.map(t => new Date(t)),
+                y: data.wave_height,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Wave Height',
+                line: { color: '#06b6d4', width: 3 },
+                yaxis: 'y'
+            };
+
+            const trace2 = {
+                x: data.timestamps.map(t => new Date(t)),
+                y: data.tide_level,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Tide Level',
+                line: { color: '#8b5cf6', width: 3 },
+                yaxis: 'y2'
+            };
+
+            const layout = {
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(255,255,255,0.05)',
+                font: { color: '#e2e8f0' },
+                xaxis: { title: 'Time', gridcolor: 'rgba(255,255,255,0.1)' },
+                yaxis: { 
+                    title: 'Wave Height (m)', 
+                    gridcolor: 'rgba(255,255,255,0.1)',
+                    titlefont: { color: '#06b6d4' }
+                },
+                yaxis2: {
+                    title: 'Tide Level (m)',
+                    overlaying: 'y',
+                    side: 'right',
+                    titlefont: { color: '#8b5cf6' }
+                },
+                margin: { t: 20, r: 60, b: 50, l: 60 }
+            };
+
+            Plotly.newPlot('wave-chart', [trace1, trace2], layout, {responsive: true});
+        }
+
+        function createRiskChart(data) {
+            const colors = data.alert_level.map(level => {
+                const colorMap = {
+                    'green': '#22c55e',
+                    'yellow': '#eab308',
+                    'orange': '#f97316',
+                    'red': '#ef4444'
+                };
+                return colorMap[level] || '#6b7280';
+            });
+
+            const trace = {
+                x: data.timestamps.map(t => new Date(t)),
+                y: data.risk_score,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Risk Score',
+                line: { color: '#f59e0b', width: 3 },
+                marker: { color: colors, size: 8 }
+            };
+
+            const layout = {
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(255,255,255,0.05)',
+                font: { color: '#e2e8f0' },
+                xaxis: { title: 'Time', gridcolor: 'rgba(255,255,255,0.1)' },
+                yaxis: { 
+                    title: 'Risk Score (0-10)', 
+                    gridcolor: 'rgba(255,255,255,0.1)',
+                    range: [0, 10]
+                },
+                shapes: [
+                    { type: 'line', x0: data.timestamps[0], x1: data.timestamps[data.timestamps.length-1], 
+                      y0: 2, y1: 2, line: { color: '#eab308', width: 1, dash: 'dash' } },
+                    { type: 'line', x0: data.timestamps[0], x1: data.timestamps[data.timestamps.length-1], 
+                      y0: 4, y1: 4, line: { color: '#f97316', width: 1, dash: 'dash' } },
+                    { type: 'line', x0: data.timestamps[0], x1: data.timestamps[data.timestamps.length-1], 
+                      y0: 6, y1: 6, line: { color: '#ef4444', width: 1, dash: 'dash' } }
+                ],
+                margin: { t: 20, r: 20, b: 50, l: 60 }
+            };
+
+            Plotly.newPlot('risk-chart', [trace], layout, {responsive: true});
+        }
+
+        function updateLastUpdate(timestamp) {
+            const date = new Date(timestamp);
+            document.getElementById('last-update').innerHTML = 
+                `Last updated: ${date.toLocaleString()} | Auto-refresh every 30 seconds`;
+        }
+
+        // Initial fetch
+        fetchCurrentData();
+
+        // Auto-update every 30 seconds
+        updateInterval = setInterval(fetchCurrentData, 30000);
+    </script>
+</body>
+</html>

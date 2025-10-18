@@ -1,0 +1,76 @@
+# TideWise Location Configuration
+
+# GPS Coordinates
+location:
+  name: "Port Elizabeth (Gqeberha)"
+  latitude: -33.96
+  longitude: 25.60
+  timezone: "Africa/Johannesburg"
+  elevation: 5  # meters above sea level
+
+# Alert Thresholds
+# Adjust based on local coastal geometry and historical flood data
+thresholds:
+  yellow:  # Early warning - prepare boats, monitor closely
+    pressure_drop_3h: 3.0   # hPa drop in 3 hours
+    wave_height: 2.5        # meters
+    tide_surge_3h: 0.8      # meters rise in 3 hours
+    temp_drop_3h: 2.0       # Celsius (cold upwelling indicator)
+  
+  orange:  # Significant risk - secure vessels, warn community
+    pressure_drop_3h: 5.0
+    wave_height: 3.5
+    tide_surge_3h: 1.5
+    temp_drop_3h: 3.0
+  
+  red:  # Emergency - evacuate low-lying areas
+    pressure_drop_3h: 8.0
+    wave_height: 5.0
+    tide_surge_3h: 2.5
+    temp_drop_3h: 4.0
+
+# Update intervals (seconds)
+timing:
+  noaa_fetch_interval: 300      # 5 minutes (NOAA updates every 3 hours)
+  sensor_read_interval: 10      # 10 seconds
+  prediction_interval: 60       # 1 minute
+  alert_check_interval: 30      # 30 seconds
+
+# Data sources
+data_sources:
+  noaa_gfs: true               # NOAA Global Forecast System
+  noaa_wavewatch: false        # NOAA WAVEWATCH III (future)
+  copernicus_ostia: false      # Copernicus SST (future)
+  local_sensors: true          # Bar30, PixHawk, etc.
+
+# Community contacts
+# Used for SMS/WhatsApp alerts (future feature)
+contacts:
+  municipality:
+    name: "Nelson Mandela Bay Municipality"
+    phone: "+27 XX XXX XXXX"
+    email: "disaster@nelsonmandelabay.gov.za"
+  
+  harbor_master:
+    name: "Port Elizabeth Harbor Authority"
+    phone: "+27 XX XXX XXXX"
+    email: "harbor@transnet.net"
+  
+  fisher_cooperative:
+    name: "St. Croix Island Fisher Cooperative"
+    phone: "+27 XX XXX XXXX"
+    email: "info@stcroixfishers.org.za"
+
+# Business model settings
+business:
+  subscription_model: true
+  monthly_fee_rand: 3333       # R40k/year = R3,333/month
+  revenue_share_community: 0.95  # 95% to community
+  revenue_share_platform: 0.05   # 5% to LoCO platform
+
+# Machine learning settings
+ml:
+  model_type: "rule_based"     # Options: rule_based, xgboost, lstm
+  retrain_interval_days: 30    # Retrain every 30 days
+  min_training_samples: 100    # Minimum samples before ML training
+  federated_learning: false    # Share model improvements with network (future)

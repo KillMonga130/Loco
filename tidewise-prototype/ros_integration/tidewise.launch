@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<!--
+TideWise ROS Launch File for LoCO AUV
+
+Starts all TideWise nodes for coastal flood prediction:
+1. Bar30 sensor node (pressure/temperature)
+2. TideWise prediction node (AI + NOAA data)
+
+Usage:
+    roslaunch tidewise_ros tidewise.launch
+
+Optional Arguments:
+    latitude:=<value>     GPS latitude (default: -33.96 for Port Elizabeth)
+    longitude:=<value>    GPS longitude (default: 25.60)
+    update_interval:=<seconds>  Prediction update rate (default: 300 = 5 min)
+
+Example:
+    roslaunch tidewise_ros tidewise.launch latitude:=-29.86 longitude:=31.03
+-->
+
+<launch>
+    <!-- Configuration Parameters -->
+    <arg name="latitude" default="-33.96" />
+    <arg name="longitude" default="25.60" />
+    <arg name="update_interval" default="300" />  <!-- 5 minutes -->
+    <arg name="bar30_rate" default="10" />  <!-- 10 Hz -->
+    
+    <!-- Bar30 Pressure Sensor Node -->
+    <node name="bar30_sensor" pkg="tidewise_ros" type="bar30_sensor_node.py" output="screen">
+        <param name="publish_rate" value="$(arg bar30_rate)" />
+        <param name="sea_level_pressure" value="1013.25" />  <!-- hPa -->
+        <param name="fluid_density" value="1029.0" />  <!-- kg/m³ seawater -->
+    </node>
+    
+    <!-- TideWise Prediction Node -->
+    <node name="tidewise" pkg="tidewise_ros" type="tidewise_node.py" output="screen">
+        <param name="latitude" value="$(arg latitude)" />
+        <param name="longitude" value="$(arg longitude)" />
+        <param name="update_interval" value="$(arg update_interval)" />
+    </node>
+    
+    <!-- Optional: OLED Display Node (if available) -->
+    <!-- <node name="tidewise_oled" pkg="tidewise_ros" type="oled_display_node.py" output="screen" /> -->
+    
+</launch>

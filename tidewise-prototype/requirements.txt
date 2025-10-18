@@ -1,0 +1,34 @@
+# TideWise Prototype Dependencies
+
+# Core data processing
+numpy>=1.24.0
+pandas>=2.0.0
+requests>=2.31.0
+
+# Weather/ocean data parsing
+xarray>=2023.1.0          # For NetCDF files
+netCDF4>=1.6.0            # NetCDF support
+cfgrib>=0.9.10            # GRIB2 file support (NOAA data)
+eccodes>=1.5.0            # ECMWF GRIB decoder
+
+# Alternative GRIB parser (if cfgrib fails)
+# pygrib>=2.1.4           # Uncomment if needed
+
+# Time handling
+python-dateutil>=2.8.0
+
+# Machine learning (for prediction model)
+scikit-learn>=1.3.0
+
+# Web dashboard (Phase 3)
+flask>=2.3.0
+plotly>=5.14.0            # Interactive charts
+
+# Visualization
+matplotlib>=3.7.0
+
+# Testing
+pytest>=7.4.0
+
+# Configuration
+python-dotenv>=1.0.0

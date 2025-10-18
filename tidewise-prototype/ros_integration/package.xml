@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>tidewise_ros</name>
+  <version>1.0.0</version>
+  <description>
+    TideWise coastal flood early-warning system for LoCO AUV.
+    Combines Bar30 pressure sensor, PixHawk IMU, and NOAA weather data
+    to predict storm surge and coastal flooding 6-12 hours in advance.
+  </description>
+
+  <maintainer email="tidewise@oceanhub.africa">TideWise Team</maintainer>
+  <license>MIT</license>
+  <url type="website">https://github.com/loco-auv/tidewise</url>
+
+  <author email="tidewise@oceanhub.africa">TideWise Community</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>rospy</depend>
+  <depend>std_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>geometry_msgs</depend>
+  
+  <exec_depend>python3-numpy</exec_depend>
+  <exec_depend>python3-pandas</exec_depend>
+  <exec_depend>python3-requests</exec_depend>
+
+</package>
