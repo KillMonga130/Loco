@@ -1,0 +1,22 @@
+# TideWise Vercel-Optimized Dependencies (Lightweight)
+
+# Core data processing
+numpy>=1.24.0
+pandas>=2.0.0
+requests>=2.31.0
+
+# Lightweight weather data (remove heavy GRIB libraries)
+xarray>=2023.1.0
+
+# Time handling
+python-dateutil>=2.8.0
+
+# Web dashboard
+flask>=2.3.0
+plotly>=5.14.0
+
+# Configuration
+python-dotenv>=1.0.0
+
+# Note: Removed cfgrib, eccodes, netCDF4 to reduce size
+# This means NOAA data will need to use HTTP JSON API instead of GRIB files
